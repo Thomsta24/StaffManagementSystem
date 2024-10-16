@@ -150,7 +150,7 @@ namespace ServerLibrary.Repositories.Implementations
                 issuer: _config.Value.Issuer,
                 audience: _config.Value.Audience,
                 claims: userClaims,
-                expires: DateTime.Now.AddDays(1),
+                expires: DateTime.Now.AddSeconds(2),
                 signingCredentials: credentials
                 );
             
