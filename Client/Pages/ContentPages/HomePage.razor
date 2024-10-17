@@ -1,6 +1,11 @@
 ﻿@page "/home/dashboard"
 @layout MainLayout
-<h1>Home page</h1>
+@using Client.Pages.AdministrationPages
+@using Client.Pages.DepartmentPages
+
+<TableBanner />
+<GeneralDepartmentPage />
+<Syncfusion.Blazor.Popups.SfDialogProvider />
 
 @code {
     [CascadingParameter] public Task<AuthenticationState> AuthenticationState { get; set; }
