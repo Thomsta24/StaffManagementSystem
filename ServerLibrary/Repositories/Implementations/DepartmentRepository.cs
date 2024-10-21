@@ -8,7 +8,10 @@ namespace ServerLibrary.Repositories.Implementations
 {
     public class DepartmentRepository(AppDbContext appDbContext) : IGenericRepositoryInterface<Department>
     {
-        public async Task<List<Department>> GetAll() => await appDbContext.Departments.ToListAsync();
+        public async Task<List<Department>> GetAll() => await appDbContext
+            .Departments.AsNoTracking()
+            .Include(gd => gd.GeneralDepartment)
+            .ToListAsync();
 
         public async Task<Department> GetById(int id) => await appDbContext.Departments.FindAsync(id);
 
@@ -27,6 +30,7 @@ namespace ServerLibrary.Repositories.Implementations
             if (department == null) return NotFound();
 
             department.Name = item.Name;
+            department.GeneralDepartmentId = item.GeneralDepartmentId;
             await Commit();
             return Success();
         }
