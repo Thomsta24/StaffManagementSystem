@@ -8,7 +8,10 @@ namespace ServerLibrary.Repositories.Implementations
 {
     public class TownRepository(AppDbContext appDbContext) : IGenericRepositoryInterface<Town>
     {
-        public async Task<List<Town>> GetAll() => await appDbContext.Towns.ToListAsync();
+        public async Task<List<Town>> GetAll() => await appDbContext
+            .Towns.AsNoTracking()
+            .Include(ci => ci.City)
+            .ToListAsync();
 
         public async Task<Town> GetById(int id) => await appDbContext.Towns.FindAsync(id);
 
@@ -27,6 +30,7 @@ namespace ServerLibrary.Repositories.Implementations
             if (town == null) return NotFound();
 
             town.Name = item.Name;
+            town.CityId = item.CityId;
             await Commit();
             return Success();
         }
