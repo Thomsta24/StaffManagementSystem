@@ -64,9 +64,23 @@ builder.Services.AddScoped<IGenericRepositoryInterface<Country>, CountryReposito
 builder.Services.AddScoped<IGenericRepositoryInterface<City>, CityRepository>();
 builder.Services.AddScoped<IGenericRepositoryInterface<Town>, TownRepository>();
 
+builder.Services.AddScoped<IGenericRepositoryInterface<Overtime>, OvertimeRepository>();
+builder.Services.AddScoped<IGenericRepositoryInterface<OvertimeType>, OvertimeTypeRepository>();
+
+builder.Services.AddScoped<IGenericRepositoryInterface<Sanction>, SanctionRepository>();
+builder.Services.AddScoped<IGenericRepositoryInterface<SanctionType>, SanctionTypeRepository>();
+
+builder.Services.AddScoped<IGenericRepositoryInterface<Vacation>, VacationRepository>();
+builder.Services.AddScoped<IGenericRepositoryInterface<VacationType>, VacationTypeRepository>();
+
+builder.Services.AddScoped<IGenericRepositoryInterface<Doctor>, DoctorRepository>();
+
 builder.Services.AddScoped<IGenericRepositoryInterface<Employee>, EmployeeRepository>();
 
 var app = builder.Build();
+
+//Register Syncfusion license
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NDaF5cWWtCf1NpR2pGfV5ycEVAal9YTnZYUj0eQnxTdEFiWX1ccXxWT2BbU0d3XQ==");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

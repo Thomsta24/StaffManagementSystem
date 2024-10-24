@@ -12,8 +12,13 @@
 @using Client.Layout
 @using Client.Pages.ContentPages.DepartmentPages
 @using Client.Pages.OtherPages
+@using Client.Pages.OtherPages.DoctorPages
+@using Client.Pages.OtherPages.VacationPages
+@using Client.Pages.OtherPages.OvertimePages
+@using Client.Pages.OtherPages.SanctionPages
 @using Client.Pages.ContentPages.LocationPages
 @using Client.Pages.ContentPages.UserPages
+@using Client.Pages.ContentPages.EmployeePages
 
 @using BaseLibrary.DTOs
 @using ClientLibrary.Helpers
@@ -21,6 +26,7 @@
 @using ClientLibrary.Services.Contracts
 @using Syncfusion.Blazor.Popups
 @using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Grids
 
 
 @inject AuthenticationStateProvider AuthStateProvider
@@ -47,3 +53,18 @@
 
 @* Employee *@
 @inject IGenericServiceInterface<Employee> employeeService
+
+@* Doctor *@
+@inject IGenericServiceInterface<Doctor> doctorService
+
+@* Overtime *@
+@inject IGenericServiceInterface<Overtime> overtimeService
+@inject IGenericServiceInterface<OvertimeType> overtimeTypeService
+
+@* Sanction *@
+@inject IGenericServiceInterface<Sanction> sanctionService
+@inject IGenericServiceInterface<SanctionType> sanctionTypeService
+
+@* Vacation *@
+@inject IGenericServiceInterface<Vacation> vacationService
+@inject IGenericServiceInterface<VacationType> vacationTypeService
