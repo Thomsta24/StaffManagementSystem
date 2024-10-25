@@ -14,7 +14,10 @@
                             </button>
                         </div>
                         <div class="card-body">
-                            <SfGrid DataSource="@Employees">
+                            @{
+                                var Tool = (new List<string>() { "Search", "ExcelExport", "PdfExport", "Print" });
+                            }
+                            <SfGrid DataSource="@Employees" AllowPaging="true" AllowSorting="true" Toolbar="@Tool" AllowExcelExport="true" AllowPdfExport="true" @ref="DefaultGrid">
                                 <GridColumns>
                                     <GridColumn HeaderText="Employee Image">
                                         <Template>
@@ -37,7 +40,7 @@
                                         <Template>
                                             @{
                                                 var employee = (context as Employee);
-                                                <i class="bi bi-menu-down text-primary" id="cursorStyle" @onclick="() => ShowMenuPopup(employee!)"></i>
+                                                <i class="bi bi-menu-down text-primary cursorStyle" @onclick="() => ShowMenuPopup(employee!)"></i>
                                             }
                                         </Template>
                                     </GridColumn>
@@ -82,7 +85,13 @@
              HandleAddSanctionClicked="AddSanctionClicked" />
 
 <DoctorDialog @ref="doctorDialog" Doctor="Doctor" HandleSaveOperationEvent="SaveHealthEvent" />
+<OvertimeDialog @ref="overtimeDialog" ItemModel="Overtime" OvertimeTypes="OvertimeTypes" HandleSaveOperationEvent="SaveOvertimeEvent" />
+<SanctionDialog @ref="sanctionDialog" ItemModel="Sanction" SanctionTypes="SanctionTypes" HandleSaveOperationEvent="SaveSanctionEvent" />
+<VacationDialog @ref="vacationDialog" ItemModel="Vacation" VacationTypes="VacationTypes" HandleSaveOperationEvent="SaveVacationEvent" />
+
 @code {
+    private SfGrid<Employee>? DefaultGrid;
+
     AddOrUpdateEmployeePage? addOrUpdateEmployee;
     public List<Employee> Employees { get; set; } = [];
     public Employee Employee { get; set; } = new();
@@ -108,6 +117,9 @@
         allState.Action += StateHasChanged;
         await LoadEmployees();
         await LoadDefaults();
+        await GetOvertimeTypes();
+        await GetSanctionTypes();
+        await GetVacationTypes();
     }
 
     private async Task LoadDefaults()
@@ -264,12 +276,97 @@
         }
     }
 
+    OvertimeDialog? overtimeDialog;
+    Overtime Overtime = new();
+    List<OvertimeType> OvertimeTypes = [];
+    private void AddOvertimeClicked()
+    {
+        Overtime.EmployeeId = SelectedEmployee.Id;
+        contextMenu.CloseContextMenu();
+        overtimeDialog!.OpenDialog();
+    }
 
+    async Task SaveOvertimeEvent(Overtime item)
+    {
+        item.EmployeeId = SelectedEmployee.Id;
+        var (flag, message) = await overtimeService.Insert(item, Constants.OvertimeBaseUrl);
+
+        var response = await DisplayMessage(flag, message);
+        if (response)
+        {
+            SelectedEmployee = new();
+            Overtime = new();
+            overtimeDialog!.CloseDialog();
+        }
+    }
+
+    SanctionDialog? sanctionDialog;
+    Sanction Sanction = new();
+    List<SanctionType> SanctionTypes = [];
+    private void AddSanctionClicked()
+    {
+        Sanction.EmployeeId = SelectedEmployee.Id;
+        contextMenu.CloseContextMenu();
+        sanctionDialog!.OpenDialog();
+    }
+
+    async Task SaveSanctionEvent(Sanction item)
+    {
+        item.EmployeeId = SelectedEmployee.Id;
+        var (flag, message) = await sanctionService.Insert(item, Constants.SanctionBaseUrl);
+
+        var response = await DisplayMessage(flag, message);
+        if (response)
+        {
+            SelectedEmployee = new();
+            Sanction = new();
+            sanctionDialog!.CloseDialog();
+        }
+    }
+
+    VacationDialog? vacationDialog;
+    Vacation Vacation = new();
+    List<VacationType> VacationTypes = [];
+    private void AddVacationClicked()
+    {
+        Vacation.EmployeeId = SelectedEmployee.Id;
+        contextMenu.CloseContextMenu();
+        vacationDialog!.OpenDialog();
+    }
+
+    async Task SaveVacationEvent(Vacation item)
+    {
+        item.EmployeeId = SelectedEmployee.Id;
+        var (flag, message) = await vacationService.Insert(item, Constants.VacationBaseUrl);
+
+        var response = await DisplayMessage(flag, message);
+        if (response)
+        {
+            SelectedEmployee = new();
+            Vacation = new();
+            vacationDialog!.CloseDialog();
+        }
+    }
+
+    private async Task GetOvertimeTypes() => OvertimeTypes = await overtimeTypeService.GetAll(Constants.OvertimeTypeBaseUrl);
+    private async Task GetSanctionTypes() => SanctionTypes = await sanctionTypeService.GetAll(Constants.SanctionTypeBaseUrl);
+    private async Task GetVacationTypes() => VacationTypes = await vacationTypeService.GetAll(Constants.VacationTypeBaseUrl);
 
     void HandleDetailsPageCloseBtnClicked()
     {
         ShowDetailsPage = false;
         ShowMainPage = true;
+    }
+
+    //Excel / PDF export
+
+    public async Task ToolbarClickHandler(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Text == "Excel Export")
+            await this.DefaultGrid!.ExcelExport();
+
+        if (args.Item.Text == "PDF Export")
+            await this.DefaultGrid!.PdfExport();
     }
 
     private async Task<bool> DisplayMessage(bool flag, string message)

@@ -1,30 +1,40 @@
 ﻿@implements IDisposable
-@if (allState.ShowHealth)
+@if (allState.ShowSanction)
 {
     <div class="container mt-5">
         <div class="row">
             <div class="col-lg-12">
                 <div class="card border-warning shadow-lg">
                     <div class="card-header">
-                        <h4 class="float-start">Health Information</h4>
+                        <h4 class="float-start">Manage Employees Sanction</h4>
                     </div>
                     <div class="card-header" style="max-height:580px; overflow-x:hidden; overflow-y:scroll;">
                         <div class="card-body">
                             @{
                                 var Tool = (new List<string>() { "Search", "ExcelExport", "PdfExport", "Print" });
                             }
-                            <SfGrid DataSource="@Doctors" AllowPaging="true" AllowSorting="true" Toolbar="@Tool" AllowExcelExport="true" AllowPdfExport="true" @ref="DefaultGrid">
+                            <SfGrid DataSource="@Sanctions" AllowPaging="true" AllowSorting="true" Toolbar="@Tool" AllowExcelExport="true" AllowPdfExport="true" @ref="DefaultGrid">
                                 <GridPageSettings PageSize="5"></GridPageSettings>
-                                <GridEvents OnToolbarClick="ToolbarClickHandler" TValue="Doctor"></GridEvents>
+                                <GridEvents OnToolbarClick="ToolbarClickHandler" TValue="Sanction"></GridEvents>
                                 <GridColumns>
-                                    <GridColumn Field=@nameof(Doctor.EmployeeId) HeaderText="ID"></GridColumn>
-                                    <GridColumn Field=@nameof(Doctor.MedicalDiagnose) HeaderText="Medical Diagnose"></GridColumn>
-                                    <GridColumn Field=@nameof(Doctor.MedicalRecommendation) HeaderText="Recommendation"></GridColumn>
-                                    <GridColumn Field=@nameof(Doctor.Date) HeaderText="Date"></GridColumn>
+                                    <GridColumn Field=@nameof(Sanction.EmployeeId) HeaderText="ID"></GridColumn>
+                                    <GridColumn HeaderText="Type">
+                                        <Template>
+                                            @{
+                                                var item = (context as Sanction);
+                                                <div>
+                                                    @item.SanctionType!.Name
+                                                </div>
+                                            }
+                                        </Template>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(Sanction.Date) HeaderText="Occuring Date"></GridColumn>
+                                    <GridColumn Field=@nameof(Sanction.Punishment) HeaderText="Punishment"></GridColumn>
+                                    <GridColumn Field=@nameof(Sanction.PunishmentDate) HeaderText="Punishment Date"></GridColumn>
                                     <GridColumn HeaderText="Action">
                                         <Template>
                                             @{
-                                                var employee = (context as Doctor);
+                                                var employee = (context as Sanction);
                                                 <div>
                                                     <i class="bi bi-pencil text-info cursorStyle" @onclick="() => EditClicked(employee!)"></i>
                                                     <i class="bi bi-trash text-danger cursorStyle" @onclick="() => DeleteClicked(employee!)"></i>
@@ -42,57 +52,53 @@
     </div>
 }
 
-<DoctorDialog @ref="doctorDialog" Doctor="Doctor" HandleSaveOperationEvent="HandleSaveOperationEvent" />
+<SanctionDialog @ref="sanctionDialog" ItemModel="ItemModel" SanctionTypes="SanctionTypes" HandleSaveOperationEvent="HandleSaveOperationEvent" />
 
 @code {
-    private SfGrid<Doctor>? DefaultGrid;
-    DoctorDialog? doctorDialog;
-    Doctor Doctor = new();
-
-    public List<Doctor> Doctors { get; set; } = new();
+    private SfGrid<Sanction>? DefaultGrid;
+    SanctionDialog? sanctionDialog;
+    Sanction ItemModel = new();
+    public List<Sanction> Sanctions { get; set; } = new();
+    public List<SanctionType> SanctionTypes { get; set; } = new();
 
     protected async override Task OnInitializedAsync()
     {
-        await GetHealth();
+        await GetTypes();
+        await GetSanction();
         allState.Action += StateHasChanged;
     }
 
-    private async Task GetHealth() => Doctors = await doctorService.GetAll(Constants.DoctorBaseUrl);
+    private async Task GetTypes() => SanctionTypes = await sanctionTypeService.GetAll(Constants.SanctionTypeBaseUrl);
+    private async Task GetSanction() => Sanctions = await sanctionService.GetAll(Constants.SanctionBaseUrl);
 
-    void AddButtonClicked()
+    void OpenDialog() => sanctionDialog?.OpenDialog();
+
+    private async Task HandleSaveOperationEvent(Sanction item)
     {
-        Doctor = new();
-        OpenDialog();
-    }
-
-    void OpenDialog() => doctorDialog?.OpenDialog();
-
-    private async Task HandleSaveOperationEvent(Doctor doctor)
-    {
-        var result = await doctorService.Update(doctor, Constants.DoctorBaseUrl);
+        var result = await sanctionService.Update(item, Constants.SanctionBaseUrl);
         bool successCheck = await DisplayMessage(result.Flag, result.Message);
         if (successCheck)
         {
-            Doctor = new();
-            await GetHealth();
+            ItemModel = new();
+            await GetSanction();
         }
     }
 
-    private void EditClicked(Doctor doctor)
+    private void EditClicked(Sanction item)
     {
-        Doctor = doctor;
+        ItemModel = item;
         OpenDialog();
     }
 
-    private async Task DeleteClicked(Doctor doctor)
+    private async Task DeleteClicked(Sanction item)
     {
         bool confirm = await dialogService.ConfirmAsync($"Are you sure you wanna delete this?", "Confirm Delete");
         if (!confirm) return;
 
-        var response = await doctorService.DeleteById(doctor.EmployeeId, Constants.DoctorBaseUrl);
+        var response = await sanctionService.DeleteById(item.EmployeeId, Constants.SanctionBaseUrl);
         var result = await DisplayMessage(response.Flag, response.Message);
         if (result)
-            await GetHealth();
+            await GetSanction();
     }
 
     private async Task<bool> DisplayMessage(bool flag, string message)
@@ -117,7 +123,7 @@
     {
         if (args.Item.Text == "Excel Export")
             await this.DefaultGrid!.ExcelExport();
-            
+
         if (args.Item.Text == "PDF Export")
             await this.DefaultGrid!.PdfExport();
     }
