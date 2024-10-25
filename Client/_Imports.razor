@@ -19,6 +19,7 @@
 @using Client.Pages.ContentPages.LocationPages
 @using Client.Pages.ContentPages.UserPages
 @using Client.Pages.ContentPages.EmployeePages
+@using Client.Pages.ProfilePages
 
 @using BaseLibrary.DTOs
 @using ClientLibrary.Helpers
@@ -69,3 +70,7 @@
 @* Vacation *@
 @inject IGenericServiceInterface<Vacation> vacationService
 @inject IGenericServiceInterface<VacationType> vacationTypeService
+
+@* User Profile *@
+@inject UserProfileState userProfileState
+@inject GetHttpClient getHttpClient

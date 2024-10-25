@@ -1,13 +1,13 @@
 ﻿using BaseLibrary.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ServerLibrary.Data.Migrations;
 using ServerLibrary.Repositories.Contracts;
 
 namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]
     public class AuthenticationController : ControllerBase
     {
         #region Fields
@@ -23,6 +23,7 @@ namespace Server.Controllers
         #endregion
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> CreateAsync(Register user)
         {
             if (user == null) return BadRequest("Model is empty");
@@ -31,6 +32,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> SignInAsync(Login user)
         {
             if (user == null) return BadRequest("Model is empty");
@@ -39,6 +41,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("refresh-token")]
+        [AllowAnonymous]
         public async Task<IActionResult> RefreshTokenAsync(RefreshToken token)
         {
             if (token == null) return BadRequest("Model is empty");
@@ -47,6 +50,7 @@ namespace Server.Controllers
         }
 
         [HttpGet("users")]
+        [Authorize]
         public async Task<IActionResult> GetUsersAsync()
         {
             var users = await _accountInterface.GetUsers();
@@ -55,6 +59,7 @@ namespace Server.Controllers
         }
 
         [HttpPut("update-user")]
+        [Authorize]
         public async Task<IActionResult> UpdateUser(ManageUser user)
         {
             var result = await _accountInterface.UpdateUser(user);
@@ -62,6 +67,7 @@ namespace Server.Controllers
         }
 
         [HttpGet("roles")]
+        [Authorize]
         public async Task<IActionResult> GetRoles()
         {
             var users = await _accountInterface.GetRoles();
@@ -70,9 +76,26 @@ namespace Server.Controllers
         }
 
         [HttpDelete("delete-user/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var result = await _accountInterface.DeleteUser(id);
+            return Ok(result);
+        }
+
+        [HttpGet("user-image/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetUserImage(int id)
+        {
+            var result = await _accountInterface.GetUserImage(id);
+            return Ok(result);
+        }
+
+        [HttpPut("update-profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile(UserProfile profile)
+        {
+            var result = await _accountInterface.UpdateProfile(profile);
             return Ok(result);
         }
     }
