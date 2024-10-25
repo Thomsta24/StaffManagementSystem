@@ -1,30 +1,40 @@
 ﻿@implements IDisposable
-@if (allState.ShowHealth)
+@if (allState.ShowOvertime)
 {
     <div class="container mt-5">
         <div class="row">
             <div class="col-lg-12">
                 <div class="card border-warning shadow-lg">
                     <div class="card-header">
-                        <h4 class="float-start">Health Information</h4>
+                        <h4 class="float-start">Manage Employees Overtime</h4>
                     </div>
                     <div class="card-header" style="max-height:580px; overflow-x:hidden; overflow-y:scroll;">
                         <div class="card-body">
                             @{
                                 var Tool = (new List<string>() { "Search", "ExcelExport", "PdfExport", "Print" });
                             }
-                            <SfGrid DataSource="@Doctors" AllowPaging="true" AllowSorting="true" Toolbar="@Tool" AllowExcelExport="true" AllowPdfExport="true" @ref="DefaultGrid">
+                            <SfGrid DataSource="@Overtimes" AllowPaging="true" AllowSorting="true" Toolbar="@Tool" AllowExcelExport="true" AllowPdfExport="true" @ref="DefaultGrid">
                                 <GridPageSettings PageSize="5"></GridPageSettings>
-                                <GridEvents OnToolbarClick="ToolbarClickHandler" TValue="Doctor"></GridEvents>
+                                <GridEvents OnToolbarClick="ToolbarClickHandler" TValue="Overtime"></GridEvents>
                                 <GridColumns>
-                                    <GridColumn Field=@nameof(Doctor.EmployeeId) HeaderText="ID"></GridColumn>
-                                    <GridColumn Field=@nameof(Doctor.MedicalDiagnose) HeaderText="Medical Diagnose"></GridColumn>
-                                    <GridColumn Field=@nameof(Doctor.MedicalRecommendation) HeaderText="Recommendation"></GridColumn>
-                                    <GridColumn Field=@nameof(Doctor.Date) HeaderText="Date"></GridColumn>
+                                    <GridColumn Field=@nameof(Overtime.EmployeeId) HeaderText="ID"></GridColumn>
+                                    <GridColumn HeaderText="Type">
+                                        <Template>
+                                            @{
+                                                var item = (context as Overtime);
+                                                <div>
+                                                    @item.OvertimeType!.Name
+                                                </div>
+                                            }
+                                        </Template>
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(Overtime.StartDate) HeaderText="Start Date"></GridColumn>
+                                    <GridColumn Field=@nameof(Overtime.EndDate) HeaderText="End Date"></GridColumn>
+                                    <GridColumn Field=@nameof(Overtime.NumberOfDays) HeaderText="Number of days"></GridColumn>
                                     <GridColumn HeaderText="Action">
                                         <Template>
                                             @{
-                                                var employee = (context as Doctor);
+                                                var employee = (context as Overtime);
                                                 <div>
                                                     <i class="bi bi-pencil text-info cursorStyle" @onclick="() => EditClicked(employee!)"></i>
                                                     <i class="bi bi-trash text-danger cursorStyle" @onclick="() => DeleteClicked(employee!)"></i>
@@ -42,57 +52,53 @@
     </div>
 }
 
-<DoctorDialog @ref="doctorDialog" Doctor="Doctor" HandleSaveOperationEvent="HandleSaveOperationEvent" />
+<OvertimeDialog @ref="overtimeDialog" ItemModel="ItemModel" OvertimeTypes="OvertimeTypes" HandleSaveOperationEvent="HandleSaveOperationEvent" />
 
 @code {
-    private SfGrid<Doctor>? DefaultGrid;
-    DoctorDialog? doctorDialog;
-    Doctor Doctor = new();
-
-    public List<Doctor> Doctors { get; set; } = new();
+    private SfGrid<Overtime>? DefaultGrid;
+    OvertimeDialog? overtimeDialog;
+    Overtime ItemModel = new();
+    public List<Overtime> Overtimes { get; set; } = new();
+    public List<OvertimeType> OvertimeTypes { get; set; } = new();
 
     protected async override Task OnInitializedAsync()
     {
-        await GetHealth();
+        await GetTypes();
+        await GetOvertime();
         allState.Action += StateHasChanged;
     }
 
-    private async Task GetHealth() => Doctors = await doctorService.GetAll(Constants.DoctorBaseUrl);
+    private async Task GetTypes() => OvertimeTypes = await overtimeTypeService.GetAll(Constants.OvertimeTypeBaseUrl);
+    private async Task GetOvertime() => Overtimes = await overtimeService.GetAll(Constants.OvertimeBaseUrl);
 
-    void AddButtonClicked()
+    void OpenDialog() => overtimeDialog?.OpenDialog();
+
+    private async Task HandleSaveOperationEvent(Overtime item)
     {
-        Doctor = new();
-        OpenDialog();
-    }
-
-    void OpenDialog() => doctorDialog?.OpenDialog();
-
-    private async Task HandleSaveOperationEvent(Doctor doctor)
-    {
-        var result = await doctorService.Update(doctor, Constants.DoctorBaseUrl);
+        var result = await overtimeService.Update(item, Constants.OvertimeBaseUrl);
         bool successCheck = await DisplayMessage(result.Flag, result.Message);
         if (successCheck)
         {
-            Doctor = new();
-            await GetHealth();
+            ItemModel = new();
+            await GetOvertime();
         }
     }
 
-    private void EditClicked(Doctor doctor)
+    private void EditClicked(Overtime item)
     {
-        Doctor = doctor;
+        ItemModel = item;
         OpenDialog();
     }
 
-    private async Task DeleteClicked(Doctor doctor)
+    private async Task DeleteClicked(Overtime item)
     {
         bool confirm = await dialogService.ConfirmAsync($"Are you sure you wanna delete this?", "Confirm Delete");
         if (!confirm) return;
 
-        var response = await doctorService.DeleteById(doctor.EmployeeId, Constants.DoctorBaseUrl);
+        var response = await overtimeService.DeleteById(item.EmployeeId, Constants.OvertimeBaseUrl);
         var result = await DisplayMessage(response.Flag, response.Message);
         if (result)
-            await GetHealth();
+            await GetOvertime();
     }
 
     private async Task<bool> DisplayMessage(bool flag, string message)
@@ -117,7 +123,7 @@
     {
         if (args.Item.Text == "Excel Export")
             await this.DefaultGrid!.ExcelExport();
-            
+
         if (args.Item.Text == "PDF Export")
             await this.DefaultGrid!.PdfExport();
     }
