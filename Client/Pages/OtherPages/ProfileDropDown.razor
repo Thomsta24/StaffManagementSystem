@@ -1,5 +1,6 @@
-﻿<div class="btnbtn-group">
-    <img src="@(ProfileImage == "" ? "./images/profile/baby-hat.png" : ProfileImage)" width="40" height="40" style="border-radius: 50%; margin-right: 5px;" />
+﻿@using System.Security.Claims
+<div class="btnbtn-group">
+    <img src="@(userProfileState.userProfile.Image)" width="40" height="40" style="border-radius: 50%; margin-right: 5px;" />
     <button type="button" class="btn btn-none border-0 dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
         <span class="visually-hidden">Toggle Dropdown</span>
     </button>
@@ -10,7 +11,7 @@
                 <div class="card-body">
                     <ul class="list-group">
                         <li class="list-group-item">
-                            <a class="text-primary fw-bold float-start text-decoration-none" style="font-family:Tahoma; cursor:pointer">
+                            <a class="text-primary fw-bold float-start text-decoration-none" style="font-family:Tahoma; cursor:pointer" @onclick="UserProfileClicked"> 
                                 <i class="bi bi-person-gear"></i>
                                 Profile
                             </a>
@@ -29,7 +30,31 @@
 </div>
 
 @code{
-    public string ProfileImage { get; set; } = "";
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadImage();
+        userProfileState.Action += StateHasChanged;
+    }
+
+    async Task LoadImage()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            userProfileState.userProfile.Id = authState.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)!.Value;
+            var client = await getHttpClient.GetPrivateHttpClient();
+            var response = await client.GetAsync($"api/authentication/user-image/{userProfileState.userProfile.Id}");
+            if (!response.IsSuccessStatusCode)
+                return;
+
+            var result = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(result))
+                return;
+            else
+                userProfileState.userProfile.Image = result!;
+        }
+        catch{}
+    }
 
     async Task LogoutClicked()
     {
@@ -38,4 +63,8 @@
         await customAuthStateProvider.UpdateAuthenticationState(logoutModel);
         NavManager.NavigateTo("/identity/account/login", replace: true, forceLoad: true);
     }
+
+    void UserProfileClicked() => allState.UserProfileClicked();
+
+    public void Dispose() => userProfileState.Action -= StateHasChanged;
 }
